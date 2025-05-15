@@ -1,0 +1,22 @@
+to test it 
+{
+    "first_name": "John",
+    "last_name": "Doe",
+    "date": "2023-05-20",
+    "time": "14:30:00"
+}
+
+POST  http://127.0.0.1:8000/api/attendance/recognize/
+
+
+my databse
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'attendances_db',
+        'USER': r'attendance_user',  # Raw string
+        'PASSWORD': r'houyem',          # Raw string
+        'HOST': 'localhost',
+        'PORT': '5433'
+    }
+}
