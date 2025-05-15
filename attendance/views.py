@@ -4,6 +4,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Student, StudentPhoto
 from .serializers import StudentSerializer, StudentPhotoSerializer,StudentPhotoWithStudentSerializer
 
@@ -17,21 +18,33 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
 
 class StudentPhotoViewSet(viewsets.ModelViewSet):
-    queryset = StudentPhoto.objects.all()
-    serializer_class = StudentPhotoSerializer
     queryset = StudentPhoto.objects.select_related('student').all()
     serializer_class = StudentPhotoWithStudentSerializer
+    parser_classes = (MultiPartParser, FormParser)
 
+    def create(self, request, *args, **kwargs):
+        student_id = request.data.get('student')
 
-    def perform_create(self, serializer):
-        # Get student ID from request data (you must send it from frontend)
-        student_id = self.request.data.get('student')
+        if not student_id:
+            return Response({"error": "Student ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch student instance
-        student = Student.objects.get(id=student_id)
+        # Get the list of images (either one or many)
+        images = request.FILES.getlist('images')
+        if not images:
+            return Response({"error": "No images provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Now assign it before saving, so upload_to works correctly
-        serializer.save(student=student)
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            return Response({"error": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        created_photos = []
+
+        for image in images:
+            photo = StudentPhoto(student=student, image=image)
+            photo.save()
+            created_photos.append(StudentPhotoWithStudentSerializer(photo, context={'request': request}).data)
+
+        return Response(created_photos, status=status.HTTP_201_CREATED)
 
 class StudentImagesListView(APIView):
     def get(self, request):
