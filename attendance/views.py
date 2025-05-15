@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.views import APIView
 from .models import Student, StudentPhoto
 from .serializers import StudentSerializer, StudentPhotoSerializer,StudentPhotoWithStudentSerializer
 
@@ -33,3 +33,11 @@ class StudentPhotoViewSet(viewsets.ModelViewSet):
         # Now assign it before saving, so upload_to works correctly
         serializer.save(student=student)
 
+class StudentImagesListView(APIView):
+    def get(self, request):
+        data = []
+        for student in Student.objects.all():
+            photo_urls = [photo.image.url for photo in student.photos.all()]
+            entry = [student.full_name] + photo_urls
+            data.append(entry)
+        return Response(data)
