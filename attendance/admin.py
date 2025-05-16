@@ -9,9 +9,11 @@ class StudentPhotoInline(admin.TabularInline):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'matricule')
-    inlines = [StudentPhotoInline]
+    list_display = ['full_name', 'matricule']
 
+    def full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    
 @admin.register(StudentPhoto)
 class StudentPhotoAdmin(admin.ModelAdmin):
     list_display = ('student', 'uploaded_at')

@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'attendance_check',
-    'rest_framework'
+    'rest_framework',
     'attendance',
 ]
 
@@ -82,11 +82,11 @@ WSGI_APPLICATION = 'face_recognition_attendance.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'attendances_db',
-        'USER': r'attendance_user',  # Raw string
-        'PASSWORD': r'houyem',          # Raw string
+        'NAME': 'facereco',        # Your database name
+        'USER': 'myuser',             # Your PostgreSQL username
+        'PASSWORD': '1234',     # Your PostgreSQL password
         'HOST': 'localhost',
-        'PORT': '5433'
+        'PORT': '5432', 
     }
 }
 

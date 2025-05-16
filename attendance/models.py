@@ -3,13 +3,8 @@ from django.utils import timezone
 from PIL import Image
 import os
 
-class Student(models.Model):
-    matricule = models.CharField(max_length=20, unique=True)
-    full_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=50)
-
-    def __str__(self):
-        return f"{self.full_name} ({self.matricule})"
+# ✅ Import Student model from the other app
+from attendance_check.models import Student
 
 
 def student_image_upload_path(instance, filename):
@@ -33,8 +28,7 @@ class StudentPhoto(models.Model):
         # Generate thumbnail only after saving and if it doesn't exist yet
         if self.image and not self.thumbnail:
             self.generate_thumbnail()
-
-            # Save again to update thumbnail field (avoid recursion by save=False)
+            # Save again to update thumbnail field
             super().save(update_fields=['thumbnail'])
 
     def generate_thumbnail(self):
