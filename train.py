@@ -8,23 +8,24 @@ import json
 
 from pathlib import Path
 
-# Args: JSON with {"name": "Full Name", "images": ["/path/image1.jpg", ...]}
+# Args: JSON list [{"name": "Full Name", "images": ["/path/image1.jpg", ...]}, ...]
 if len(sys.argv) < 2:
-    print("Usage: python train_faces.py '<json_string>'")
+    print("Usage: python train_faces.py '<json_list>'")
     exit(1)
 
-data = json.loads(sys.argv[1])
-student_name = data['name']
-image_paths = data['images']
+students_data = json.loads(sys.argv[1])  # list of { name, images }
 
 ENCODINGS_FILE = "training/encodings.pkl"
+MODEL_FILE = "training/face_model.yml"
 os.makedirs(os.path.dirname(ENCODINGS_FILE), exist_ok=True)
 
 face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 
 known_faces = []
-known_names = []
+known_labels = []
+label_map = {}
+label_counter = 0
 
 def process_image(image_path):
     image = cv2.imread(image_path)
@@ -45,32 +46,39 @@ def process_image(image_path):
     face_img = cv2.resize(face_img, (100, 100))
     return face_img
 
-print(f"📦 Processing {len(image_paths)} images for student: {student_name}")
+# Process each student and their images
+for student in students_data:
+    student_name = student['name']
+    image_paths = student['images']
+    
+    if student_name not in label_map:
+        label_map[student_name] = label_counter
+        label_counter += 1
+    
+    print(f"\n📦 Processing {len(image_paths)} images for: {student_name}")
+    processed = 0
+    for path in image_paths:
+        face = process_image(path)
+        if face is not None:
+            known_faces.append(face)
+            known_labels.append(label_map[student_name])
+            print(f"[+] {os.path.basename(path)} processed")
+            processed += 1
+        else:
+            print(f"[!] Face not found in {os.path.basename(path)}")
+    
+    if processed == 0:
+        print(f"⚠️ No usable faces for {student_name}")
 
-processed = 0
-for path in image_paths:
-    face = process_image(path)
-    if face is not None:
-        known_faces.append(face)
-        known_names.append(student_name)
-        print(f"[+] {os.path.basename(path)} processed")
-        processed += 1
-    else:
-        print(f"[!] Face not found in {os.path.basename(path)}")
-
-if processed > 0:
-    unique_names = list(set(known_names))
-    name_to_label = {name: i for i, name in enumerate(unique_names)}
-    labels = [name_to_label[name] for name in known_names]
-
-    face_recognizer.train(known_faces, np.array(labels))
-    model_path = os.path.join(os.path.dirname(ENCODINGS_FILE), "face_model.yml")
-    face_recognizer.write(model_path)
+# Train and save model
+if known_faces:
+    face_recognizer.train(known_faces, np.array(known_labels))
+    face_recognizer.write(MODEL_FILE)
 
     with open(ENCODINGS_FILE, "wb") as f:
-        pickle.dump({"names": unique_names}, f)
+        pickle.dump({"label_map": label_map}, f)
 
-    print("✅ Training complete")
+    print("\n✅ Training complete")
+    print(f"🧠 Trained on {len(label_map)} students with {len(known_faces)} faces.")
 else:
-    print("⚠️ No faces processed")
-
+    print("\n❌ No faces were processed, training aborted.")

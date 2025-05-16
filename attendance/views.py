@@ -34,29 +34,29 @@ class StudentPhotoViewSet(viewsets.ModelViewSet):
         if not student:
             return Response({"error": "Student not found."}, status=404)
 
+
         created_photos = []
-        image_paths = []
 
         for image in images:
             photo = StudentPhoto(student=student, image=image)
             photo.save()
             created_photos.append(StudentPhotoWithStudentSerializer(photo, context={'request': request}).data)
-            image_paths.append(photo.image.path)
 
-        # Construct full name manually
-        full_name = f"{student.first_name} {student.last_name}"
+        # Now gather all students and their image paths for retraining
+        training_inputs = []
 
-        # Prepare training input
-        training_input = {
-            "name": full_name,
-            "images": image_paths
-        }
+        all_students = Student.objects.prefetch_related('photos').all()
+        for stu in all_students:
+            photo_paths = [photo.image.path for photo in stu.photos.all() if photo.image]
+            if photo_paths:
+                training_inputs.append({
+                    "name": f"{stu.first_name} {stu.last_name}",
+                    "images": photo_paths
+                })
 
-        # Path to training script (adjust if needed)
+        # Call training script with all students' data
         script_path = os.path.join(settings.BASE_DIR, "train.py")
-
-        # Run the script with JSON data
-        subprocess.Popen([sys.executable, script_path, json.dumps(training_input)])
+        subprocess.Popen([sys.executable, script_path, json.dumps(training_inputs)])
 
         return Response(created_photos, status=201)
 
