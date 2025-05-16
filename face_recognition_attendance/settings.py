@@ -42,10 +42,12 @@ INSTALLED_APPS = [
 
     'attendance_check',
     'rest_framework',
+    'corsheaders',
     'attendance',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -85,8 +87,8 @@ DATABASES = {
         'NAME': 'facereco',        # Your database name
         'USER': 'myuser',             # Your PostgreSQL username
         'PASSWORD': '1234',     # Your PostgreSQL password
-        'HOST': 'localhost',
-        'PORT': '5432', 
+        'HOST': '127.0.0.1',
+        'PORT': '5000', 
     }
 }
 
@@ -135,3 +137,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Allow Cross-Origin from React
+CORS_ALLOW_ALL_ORIGINS = True
+
+# REST framework defaults
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
+}
