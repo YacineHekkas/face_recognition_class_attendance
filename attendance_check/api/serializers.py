@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from attendance_check.models import Classe, Student, Attendance
+from datetime import datetime
 
 class ClasseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,30 +8,27 @@ class ClasseSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class StudentSerializer(serializers.ModelSerializer):
-    class_name = serializers.CharField(source='classe.name', read_only=True)
-    
     class Meta:
         model = Student
-        fields = ['id', 'matricule', 'first_name', 'last_name', 'classe', 'class_name']
+        fields = '__all__'
 
 class AttendanceSerializer(serializers.ModelSerializer):
-    student_details = StudentSerializer(source='student', read_only=True)
-    
     class Meta:
         model = Attendance
-        fields = ['id', 'student', 'student_details', 'date', 'time', 'status']
-        extra_kwargs = {
-            'student': {'write_only': True}
-        }
+        fields = ['id', 'student', 'history']
+
+class HistoryEntrySerializer(serializers.Serializer):
+    status = serializers.CharField()
+    date = serializers.DateField()
+    time = serializers.TimeField()
 
 class MarkAttendanceSerializer(serializers.Serializer):
-    matricule = serializers.CharField(max_length=20)
-    date = serializers.DateField()
-    time = serializers.TimeField()
-    status = serializers.ChoiceField(choices=['present', 'absent'])
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
 
-class TextRecognitionSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=100)
-    last_name = serializers.CharField(max_length=100)
-    date = serializers.DateField()
-    time = serializers.TimeField()
+class StudentNameSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+class BatchRecognizeSerializer(serializers.Serializer):
+    students = StudentNameSerializer(many=True)

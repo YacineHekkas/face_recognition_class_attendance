@@ -17,18 +17,21 @@ class Student(models.Model):
         return f"{self.matricule} - {self.first_name} {self.last_name}"
 
 class Attendance(models.Model):
-    STATUS_CHOICES = [
-        ('present', 'Present'),
-        ('absent', 'Absent'),
-    ]
-    
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    date = models.DateField()
-    time = models.TimeField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='absent')
-    
+    student = models.OneToOneField(
+        'Student',
+        on_delete=models.CASCADE,
+        related_name='attendance_check'
+    )
+    history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of attendance records: [{'status': 'present', 'date': 'YYYY-MM-DD', 'time': 'HH:MM:SS'}]"
+    )
+
+    def add_session_records(self, records):
+        """Add multiple records at once"""
+        self.history.extend(records)
+        self.save()
+
     class Meta:
-        unique_together = ('student', 'date', 'time')
-    
-    def __str__(self):
-        return f"{self.student} - {self.date} {self.time} - {self.status}"
+        verbose_name_plural = "Attendance Checks"
