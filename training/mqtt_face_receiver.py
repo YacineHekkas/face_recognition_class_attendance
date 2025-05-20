@@ -64,18 +64,18 @@ def send_attendance_batch():
 def recognize_face(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     faces = face_detector.detectMultiScale(gray, 1.1, 5)
-    
+
     results = []
     for (x, y, w, h) in faces:
-        face_img = gray[y:y+h, x:x+w]
+        face_img = gray[y:y + h, x:x + w]
         face_img = cv2.resize(face_img, (100, 100))
-        
+
         label, confidence = face_recognizer.predict(face_img)
-        if confidence < 70:
-            name = label_map.get(label, "Unknown")
-            results.append(name)
-    
+        name = label_map.get(label, "Unknown")
+        print(f"🧠 Prediction: {name} (confidence: {confidence:.2f})")
+        results.append({"name": name, "confidence": float(confidence)})
     return results
+
 
 def on_message(client, userdata, msg):
     global last_detection_time
@@ -89,11 +89,12 @@ def on_message(client, userdata, msg):
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
         if img is not None:
-            names = recognize_face(img)
-            for name in names:
+            results = recognize_face(img)
+            for result in results:
+                name = result["name"]
                 if name != "Unknown":
                     current_session.add(name)
-                    print(f"👤 Added to session: {name}")
+                    print(f"👤 Added to session: {name} (Confidence: {result['confidence']:.2f})")
             
             print(f"Session size: {len(current_session)} students")
         else:
