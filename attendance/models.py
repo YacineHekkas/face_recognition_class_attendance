@@ -7,6 +7,7 @@ import os
 from attendance_check.models import Student
 
 
+
 def student_image_upload_path(instance, filename):
     student_id = getattr(instance.student, 'id', None)
     return f'student_images/{student_id}/{filename}'
